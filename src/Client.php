@@ -18,10 +18,9 @@ use Facebook\WebDriver\Exception\TimeOutException;
 use Facebook\WebDriver\JavaScriptExecutor;
 use Facebook\WebDriver\WebDriver;
 use Facebook\WebDriver\WebDriverBy;
-use Facebook\WebDriver\WebDriverCapabilities;
 use Facebook\WebDriver\WebDriverExpectedCondition;
 use Facebook\WebDriver\WebDriverHasInputDevices;
-use Symfony\Component\BrowserKit\Client as BaseClient;
+use Symfony\Component\BrowserKit\Client as BrowserKitClient;
 use Symfony\Component\BrowserKit\Request;
 use Symfony\Component\BrowserKit\Response;
 use Symfony\Component\DomCrawler\Form;
@@ -31,8 +30,6 @@ use Symfony\Component\Panther\DomCrawler\Crawler;
 use Symfony\Component\Panther\DomCrawler\Form as PantherForm;
 use Symfony\Component\Panther\DomCrawler\Link as PantherLink;
 use Symfony\Component\Panther\ProcessManager\BrowserManagerInterface;
-use Symfony\Component\Panther\ProcessManager\ChromeManager;
-use Symfony\Component\Panther\ProcessManager\SeleniumManager;
 use Symfony\Component\Panther\WebDriver\WebDriverMouse;
 
 /**
@@ -41,7 +38,7 @@ use Symfony\Component\Panther\WebDriver\WebDriverMouse;
  *
  * @method Crawler getCrawler()
  */
-final class Client extends BaseClient implements WebDriver, JavaScriptExecutor, WebDriverHasInputDevices
+class BaseClient extends BrowserKitClient implements WebDriver, JavaScriptExecutor, WebDriverHasInputDevices
 {
     use ExceptionThrower;
 
@@ -51,19 +48,6 @@ final class Client extends BaseClient implements WebDriver, JavaScriptExecutor, 
     private $webDriver;
     private $browserManager;
     private $baseUri;
-
-    /**
-     * @param string[]|null $arguments
-     */
-    public static function createChromeClient(?string $chromeDriverBinary = null, ?array $arguments = null, array $options = [], ?string $baseUri = null): self
-    {
-        return new self(new ChromeManager($chromeDriverBinary, $arguments, $options), $baseUri);
-    }
-
-    public static function createSeleniumClient(?string $host = null, ?WebDriverCapabilities $capabilities = null, ?string $baseUri = null): self
-    {
-        return new self(new SeleniumManager($host, $capabilities), $baseUri);
-    }
 
     public function __construct(BrowserManagerInterface $browserManager, ?string $baseUri = null)
     {
@@ -171,7 +155,7 @@ final class Client extends BaseClient implements WebDriver, JavaScriptExecutor, 
         return $this->crawler = $this->createCrawler();
     }
 
-    public function request(string $method, string $uri, array $parameters = [], array $files = [], array $server = [], string $content = null, bool $changeHistory = true): Crawler
+    protected function makeRequest(string $method, string $uri, array $parameters = [], array $files = [], array $server = [], string $content = null, bool $changeHistory = true): Crawler
     {
         if ('GET' !== $method) {
             throw new \InvalidArgumentException('Only the GET method is supported when using WebDriver.');
@@ -435,3 +419,4 @@ final class Client extends BaseClient implements WebDriver, JavaScriptExecutor, 
         return new WebDriverMouse($this->webDriver->getMouse(), $this);
     }
 }
+
